@@ -1,6 +1,7 @@
 import cors from 'cors';
 import express from 'express';
 
+import { employeeRouter } from '../features/employees/employeeRouter';
 import { healthRouter } from '../routes/healthRouter';
 
 export const createApp = () => {
@@ -10,6 +11,15 @@ export const createApp = () => {
   app.use(express.json());
 
   app.use('/health', healthRouter);
+  app.use('/employees', employeeRouter);
+
+  app.use((error: unknown, _request: express.Request, response: express.Response, next: express.NextFunction) => {
+    void next;
+    console.error(error);
+    response.status(500).json({
+      message: 'Internal server error',
+    });
+  });
 
   return app;
 };
