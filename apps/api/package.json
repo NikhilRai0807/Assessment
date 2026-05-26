@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "tsx watch src/server/index.ts",
     "build": "tsc -p tsconfig.build.json",
+    "seed": "tsx src/seed/seedEmployees.ts",
     "start": "node dist/server/index.js",
     "lint": "eslint .",
     "test": "jest --runInBand",
