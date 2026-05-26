@@ -47,6 +47,15 @@ export function SalaryInsightsDashboard({
 
   return (
     <Stack spacing={3}>
+      <Paper elevation={0} sx={{ borderRadius: 4, p: { xs: 2, sm: 2.5 } }}>
+        <Typography variant="overline" color="text.secondary">
+          Insights scope
+        </Typography>
+        <Typography variant="body2" sx={{ mt: 0.75 }}>
+          Salary metrics shown for <strong>{salarySummary.country}</strong>.
+        </Typography>
+      </Paper>
+
       <Grid container spacing={2}>
         {[
           { label: 'Employee count', value: salarySummary.employeeCount.toString() },

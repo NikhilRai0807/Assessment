@@ -30,6 +30,22 @@ an organization with 10,000 employees.
 - `apps/web`: frontend app and frontend tests
 - `docs`: product requirements, architecture, tradeoffs, AI usage log
 
+### Frontend Structure
+
+- `apps/web/src/app`: Next.js app entrypoints and layout
+- `apps/web/src/components/employees`: employee table and employee form
+- `apps/web/src/components/insights`: salary cards, chart, and top-paying list
+- `apps/web/src/components/salary-management`: page composition and client state
+- `apps/web/src/lib`: API client, formatting helpers, and shared types
+
+### Backend Structure
+
+- `apps/api/src/app`: Express app setup and middleware
+- `apps/api/src/features/employees`: employee routes, validation, and service logic
+- `apps/api/src/features/insights`: insight routes, validation, and aggregation logic
+- `apps/api/src/lib`: Prisma client and database bootstrap helpers
+- `apps/api/src/seed`: deterministic seed generator and seeding command
+
 ## Local Setup
 
 ### Prerequisites
@@ -80,6 +96,14 @@ npm --workspace apps/web run dev
 ```
 
 The web app runs on `http://localhost:3000`.
+
+### Current Runtime Behavior
+
+- Employee create, update, and delete actions are sent to the backend API
+- The salary insights dashboard loads live data from the backend API on page load
+- Changing the country filter refreshes the salary summary and distribution chart
+- Top-paying job titles are refreshed from the API after employee mutations
+- The page still boots with local fallback props so the UI can render before live data arrives
 
 ## Test Instructions
 
@@ -247,9 +271,10 @@ with PostgreSQL or another server database.
 - Prisma schema-engine operations were unreliable in this Windows/OneDrive
   workspace, so the checked-in migration SQL is paired with a runtime schema
   bootstrap for local resilience
-- The frontend currently starts with seeded demo props and can sync against the
-  backend API; a fuller production version would move more initial loading to
-  dedicated data-fetching flows
+- The frontend still uses bootstrap fallback props for its first paint; the
+  insights dashboard then refreshes from the backend API when remote sync is enabled
+- Employee listing, filtering, and pagination are currently handled client-side
+  in the page component instead of fully hydrating from the backend query API
 - Authentication, audit trails, and salary-history tracking are intentionally
   out of scope
 
@@ -259,4 +284,3 @@ with PostgreSQL or another server database.
 - Architecture decisions: `docs/architecture.md`
 - Tradeoffs: `docs/tradeoffs.md`
 - AI usage log: `docs/ai-usage-log.md`
-

@@ -87,4 +87,18 @@ export const apiClient = {
 
     return handleResponse<TopPayingJobTitle[]>(response);
   },
+
+  async fetchSalarySummaryOverview() {
+    const response = await fetch(`${getApiBaseUrl()}/insights/summary`, {
+      cache: 'no-store',
+    });
+
+    return handleResponse<{
+      employeeCount: number;
+      totalPayroll: number;
+      averageSalary: number;
+      minSalary: number;
+      maxSalary: number;
+    }>(response);
+  },
 };

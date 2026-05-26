@@ -12,7 +12,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { startTransition, useMemo, useState } from 'react';
+import { startTransition, useEffect, useMemo, useState } from 'react';
 
 import { EmployeeForm } from '../employees/EmployeeForm';
 import { EmployeeTable } from '../employees/EmployeeTable';
@@ -74,9 +74,11 @@ export function SalaryManagementPage({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [salarySummary] = useState(initialSalarySummary);
-  const [salaryDistribution] = useState(initialSalaryDistribution);
-  const [topPayingJobTitles] = useState(initialTopPayingJobTitles);
+  const [insightErrorMessage, setInsightErrorMessage] = useState<string | null>(null);
+  const [isInsightsLoading, setIsInsightsLoading] = useState(false);
+  const [salarySummary, setSalarySummary] = useState(initialSalarySummary);
+  const [salaryDistribution, setSalaryDistribution] = useState(initialSalaryDistribution);
+  const [topPayingJobTitles, setTopPayingJobTitles] = useState(initialTopPayingJobTitles);
 
   const selectedEmployee = useMemo(
     () => employees.find((employee) => employee.id === selectedEmployeeId),
@@ -143,6 +145,52 @@ export function SalaryManagementPage({
     setPage(1);
   };
 
+  const activeInsightCountry =
+    countryFilter === 'All' ? initialSalarySummary.country : countryFilter;
+
+  useEffect(() => {
+    if (!enableRemoteSync) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadInsights = async () => {
+      setIsInsightsLoading(true);
+      setInsightErrorMessage(null);
+
+      try {
+        const [summary, distribution, jobTitles] = await Promise.all([
+          apiClient.fetchSalarySummary(activeInsightCountry),
+          apiClient.fetchSalaryDistribution(activeInsightCountry),
+          apiClient.fetchTopPayingJobTitles(),
+        ]);
+
+        if (cancelled) {
+          return;
+        }
+
+        setSalarySummary(summary);
+        setSalaryDistribution(distribution);
+        setTopPayingJobTitles(jobTitles);
+      } catch {
+        if (!cancelled) {
+          setInsightErrorMessage('Unable to load live salary insights.');
+        }
+      } finally {
+        if (!cancelled) {
+          setIsInsightsLoading(false);
+        }
+      }
+    };
+
+    void loadInsights();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeInsightCountry, enableRemoteSync]);
+
   const handleSave = async (payload: EmployeeFormValues) => {
     setErrorMessage(null);
 
@@ -163,6 +211,21 @@ export function SalaryManagementPage({
           resetFilters();
           resetDialogs();
         });
+
+        try {
+          const [summary, distribution, jobTitles] = await Promise.all([
+            apiClient.fetchSalarySummary(payload.country),
+            apiClient.fetchSalaryDistribution(payload.country),
+            apiClient.fetchTopPayingJobTitles(),
+          ]);
+
+          setSalarySummary(summary);
+          setSalaryDistribution(distribution);
+          setTopPayingJobTitles(jobTitles);
+          setInsightErrorMessage(null);
+        } catch {
+          setInsightErrorMessage('Unable to refresh salary insights.');
+        }
 
         return;
       }
@@ -204,6 +267,23 @@ export function SalaryManagementPage({
         );
         resetDialogs();
       });
+
+      if (enableRemoteSync) {
+        try {
+          const [summary, distribution, jobTitles] = await Promise.all([
+            apiClient.fetchSalarySummary(activeInsightCountry),
+            apiClient.fetchSalaryDistribution(activeInsightCountry),
+            apiClient.fetchTopPayingJobTitles(),
+          ]);
+
+          setSalarySummary(summary);
+          setSalaryDistribution(distribution);
+          setTopPayingJobTitles(jobTitles);
+          setInsightErrorMessage(null);
+        } catch {
+          setInsightErrorMessage('Unable to refresh salary insights.');
+        }
+      }
     } catch {
       setErrorMessage('Unable to delete employee.');
     }
@@ -383,6 +463,8 @@ export function SalaryManagementPage({
                 salarySummary={salarySummary}
                 salaryDistribution={salaryDistribution}
                 topPayingJobTitles={topPayingJobTitles}
+                isLoading={isInsightsLoading}
+                errorMessage={insightErrorMessage}
               />
             </Grid>
           </Grid>
