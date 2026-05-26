@@ -1,0 +1,489 @@
+'use client';
+
+import {
+  Alert,
+  Box,
+  Button,
+  Container,
+  Grid,
+  InputAdornment,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
+import { startTransition, useMemo, useState } from 'react';
+
+import { EmployeeForm } from '../employees/EmployeeForm';
+import { EmployeeTable } from '../employees/EmployeeTable';
+import { SalaryInsightsDashboard } from '../insights/SalaryInsightsDashboard';
+import { apiClient } from '../../lib/api';
+import type {
+  EmployeeFormValues,
+  EmployeeRecord,
+  SalaryDistributionBucket,
+  SalarySummary,
+  TopPayingJobTitle,
+} from '../../lib/types';
+
+type SalaryManagementPageProps = {
+  initialEmployees: EmployeeRecord[];
+  initialSalarySummary: SalarySummary;
+  initialSalaryDistribution: SalaryDistributionBucket[];
+  initialTopPayingJobTitles: TopPayingJobTitle[];
+  enableRemoteSync?: boolean;
+};
+
+const buildUpdatedEmployee = (
+  existing: EmployeeRecord | undefined,
+  payload: EmployeeFormValues,
+): EmployeeRecord => {
+  const timestamp = new Date().toISOString();
+
+  return {
+    id: payload.id ?? existing?.id ?? `emp_${timestamp}`,
+    fullName: payload.fullName,
+    jobTitle: payload.jobTitle,
+    department: payload.department,
+    country: payload.country,
+    salary: payload.salary,
+    currency: payload.currency,
+    employmentType: payload.employmentType,
+    hireDate: `${payload.hireDate}T00:00:00.000Z`,
+    createdAt: existing?.createdAt ?? timestamp,
+    updatedAt: timestamp,
+  };
+};
+
+export function SalaryManagementPage({
+  initialEmployees,
+  initialSalarySummary,
+  initialSalaryDistribution,
+  initialTopPayingJobTitles,
+  enableRemoteSync = false,
+}: SalaryManagementPageProps) {
+  const [employees, setEmployees] = useState(initialEmployees);
+  const [search, setSearch] = useState('');
+  const [countryFilter, setCountryFilter] = useState('All');
+  const [jobTitleFilter, setJobTitleFilter] = useState('All');
+  const [sortBy, setSortBy] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
+  const [formOpen, setFormOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [salarySummary] = useState(initialSalarySummary);
+  const [salaryDistribution] = useState(initialSalaryDistribution);
+  const [topPayingJobTitles] = useState(initialTopPayingJobTitles);
+
+  const selectedEmployee = useMemo(
+    () => employees.find((employee) => employee.id === selectedEmployeeId),
+    [employees, selectedEmployeeId],
+  );
+
+  const filteredEmployees = useMemo(() => {
+    const normalizedSearch = search.toLowerCase();
+
+    return employees
+      .filter((employee) =>
+        employee.fullName.toLowerCase().includes(normalizedSearch),
+      )
+      .filter((employee) =>
+        countryFilter === 'All' ? true : employee.country === countryFilter,
+      )
+      .filter((employee) =>
+        jobTitleFilter === 'All' ? true : employee.jobTitle === jobTitleFilter,
+      )
+      .sort((left, right) => {
+        const leftValue = left[sortBy as keyof EmployeeRecord];
+        const rightValue = right[sortBy as keyof EmployeeRecord];
+
+        if (typeof leftValue === 'number' && typeof rightValue === 'number') {
+          return sortOrder === 'asc' ? leftValue - rightValue : rightValue - leftValue;
+        }
+
+        const leftText = String(leftValue);
+        const rightText = String(rightValue);
+
+        return sortOrder === 'asc'
+          ? leftText.localeCompare(rightText)
+          : rightText.localeCompare(leftText);
+      });
+  }, [countryFilter, employees, jobTitleFilter, search, sortBy, sortOrder]);
+
+  const paginatedEmployees = useMemo(() => {
+    const start = (page - 1) * pageSize;
+
+    return filteredEmployees.slice(start, start + pageSize);
+  }, [filteredEmployees, page, pageSize]);
+
+  const countries = useMemo(
+    () => ['All', ...new Set(employees.map((employee) => employee.country))],
+    [employees],
+  );
+  const jobTitles = useMemo(
+    () => ['All', ...new Set(employees.map((employee) => employee.jobTitle))],
+    [employees],
+  );
+
+  const resetDialogs = () => {
+    setFormOpen(false);
+    setDeleteDialogOpen(false);
+    setSelectedEmployeeId(null);
+  };
+
+  const resetFilters = () => {
+    setSearch('');
+    setCountryFilter('All');
+    setJobTitleFilter('All');
+    setSortBy('createdAt');
+    setSortOrder('desc');
+    setPage(1);
+  };
+
+  const handleSave = async (payload: EmployeeFormValues) => {
+    setErrorMessage(null);
+
+    try {
+      if (enableRemoteSync) {
+        const employee = payload.id
+          ? await apiClient.updateEmployee(payload.id, payload)
+          : await apiClient.createEmployee(payload);
+
+        startTransition(() => {
+          setEmployees((current) => {
+            const nextEmployees = payload.id
+              ? current.map((item) => (item.id === employee.id ? employee : item))
+              : [employee, ...current];
+
+            return nextEmployees;
+          });
+          resetFilters();
+          resetDialogs();
+        });
+
+        return;
+      }
+
+      startTransition(() => {
+        setEmployees((current) => {
+          const existing = current.find((employee) => employee.id === payload.id);
+          const nextEmployee = buildUpdatedEmployee(existing, payload);
+
+          if (payload.id) {
+            return current.map((employee) =>
+              employee.id === payload.id ? nextEmployee : employee,
+            );
+          }
+
+          return [nextEmployee, ...current];
+        });
+        resetFilters();
+        resetDialogs();
+      });
+    } catch {
+      setErrorMessage('Unable to save employee.');
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedEmployeeId) {
+      return;
+    }
+
+    try {
+      if (enableRemoteSync) {
+        await apiClient.deleteEmployee(selectedEmployeeId);
+      }
+
+      startTransition(() => {
+        setEmployees((current) =>
+          current.filter((employee) => employee.id !== selectedEmployeeId),
+        );
+        resetDialogs();
+      });
+    } catch {
+      setErrorMessage('Unable to delete employee.');
+    }
+  };
+
+  return (
+    <Box
+      sx={{
+        minHeight: '100vh',
+        background:
+          'radial-gradient(circle at top left, rgba(21,94,239,0.14), transparent 26%), linear-gradient(180deg, #f5f7fb 0%, #eef4ff 100%)',
+        py: 6,
+      }}
+    >
+      <Container maxWidth="xl">
+        <Stack spacing={4}>
+          <Paper elevation={0} sx={{ borderRadius: 6, overflow: 'hidden' }}>
+            <Grid container>
+              <Grid size={{ xs: 12, lg: 7 }}>
+                <Box sx={{ p: { xs: 3, md: 5 } }}>
+                  <Typography variant="overline" color="primary">
+                    Salary intelligence workspace
+                  </Typography>
+                  <Typography variant="h3" sx={{ mt: 1 }}>
+                    Salary Management
+                  </Typography>
+                  <Typography color="text.secondary" sx={{ mt: 1.5, maxWidth: 640 }}>
+                    Manage employee records, surface pay trends, and keep HR decisions grounded in current salary data.
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid size={{ xs: 12, lg: 5 }}>
+                <Box
+                  sx={{
+                    height: '100%',
+                    p: { xs: 3, md: 4 },
+                    background:
+                      'linear-gradient(135deg, rgba(15,118,110,0.92), rgba(21,94,239,0.92))',
+                    color: 'common.white',
+                  }}
+                >
+                  <Typography variant="h6">Focus area</Typography>
+                  <Typography sx={{ mt: 1.5, opacity: 0.85 }}>
+                    Review compensation health by country, monitor payroll exposure, and keep people data current without jumping between spreadsheets.
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+          </Paper>
+
+          {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+
+          {formOpen && !selectedEmployee ? null : (
+            <Grid container spacing={3}>
+              <Grid size={{ xs: 12, lg: 8 }}>
+                <Stack spacing={3}>
+                  <Paper elevation={0} sx={{ borderRadius: 4, p: 3 }}>
+                    <Stack
+                      direction={{ xs: 'column', md: 'row' }}
+                      spacing={2}
+                      justifyContent="space-between"
+                      alignItems={{ xs: 'stretch', md: 'center' }}
+                    >
+                      <Stack spacing={1}>
+                        <Typography variant="h5">Employee management</Typography>
+                        <Typography color="text.secondary">
+                          Search, filter, and maintain records across the organization.
+                        </Typography>
+                      </Stack>
+                      <Button
+                        variant="contained"
+                        startIcon={<span aria-hidden="true">+</span>}
+                        onClick={() => {
+                          setSelectedEmployeeId(null);
+                          setFormOpen(true);
+                        }}
+                      >
+                        Add employee
+                      </Button>
+                    </Stack>
+
+                    <Grid container spacing={2} sx={{ mt: 2 }}>
+                      <Grid size={{ xs: 12, md: 4 }}>
+                        <TextField
+                          fullWidth
+                          placeholder="Search employees"
+                          value={search}
+                          onChange={(event) => {
+                            setSearch(event.target.value);
+                            setPage(1);
+                          }}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <Typography component="span" color="text.secondary">
+                                  /
+                                </Typography>
+                              </InputAdornment>
+                            ),
+                          }}
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 4 }}>
+                        <TextField
+                          fullWidth
+                          select
+                          label="Country filter"
+                          SelectProps={{ native: true }}
+                          value={countryFilter}
+                          onChange={(event) => {
+                            setCountryFilter(event.target.value);
+                            setPage(1);
+                          }}
+                        >
+                          {countries.map((country) => (
+                            <option key={country} value={country}>
+                              {country}
+                            </option>
+                          ))}
+                        </TextField>
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 4 }}>
+                        <TextField
+                          fullWidth
+                          select
+                          label="Job title filter"
+                          SelectProps={{ native: true }}
+                          value={jobTitleFilter}
+                          onChange={(event) => {
+                            setJobTitleFilter(event.target.value);
+                            setPage(1);
+                          }}
+                        >
+                          {jobTitles.map((jobTitle) => (
+                            <option key={jobTitle} value={jobTitle}>
+                              {jobTitle}
+                            </option>
+                          ))}
+                        </TextField>
+                      </Grid>
+                    </Grid>
+                  </Paper>
+
+                  <EmployeeTable
+                    employees={paginatedEmployees}
+                    page={page}
+                    pageSize={pageSize}
+                    totalItems={filteredEmployees.length}
+                    sortBy={sortBy}
+                    sortOrder={sortOrder}
+                    onSortChange={(field) => {
+                      if (field === sortBy) {
+                        setSortOrder((current) => (current === 'asc' ? 'desc' : 'asc'));
+                      } else {
+                        setSortBy(field);
+                        setSortOrder('asc');
+                      }
+                    }}
+                    onPageChange={setPage}
+                    onEdit={(employeeId) => {
+                      setSelectedEmployeeId(employeeId);
+                      setFormOpen(true);
+                    }}
+                    onDelete={(employeeId) => {
+                      setSelectedEmployeeId(employeeId);
+                      setDeleteDialogOpen(true);
+                    }}
+                  />
+                </Stack>
+              </Grid>
+
+              <Grid size={{ xs: 12, lg: 4 }}>
+                <SalaryInsightsDashboard
+                  salarySummary={salarySummary}
+                  salaryDistribution={salaryDistribution}
+                  topPayingJobTitles={topPayingJobTitles}
+                />
+              </Grid>
+            </Grid>
+          )}
+        </Stack>
+      </Container>
+
+      {formOpen ? (
+        <Box
+          sx={{
+            position: 'fixed',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            p: 2,
+            zIndex: 1400,
+          }}
+        >
+          <Box
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              backgroundColor: 'rgba(15, 23, 42, 0.34)',
+            }}
+            onClick={resetDialogs}
+          />
+          <Paper
+            role="dialog"
+            aria-labelledby="employee-form-dialog-title"
+            sx={{
+              position: 'relative',
+              zIndex: 1,
+              width: '100%',
+              maxWidth: 640,
+              borderRadius: 4,
+              p: 3,
+            }}
+          >
+            <Stack spacing={2.5}>
+              <Typography id="employee-form-dialog-title" variant="h6">
+                {selectedEmployee ? 'Edit employee' : 'Add employee'}
+              </Typography>
+              <EmployeeForm
+                initialValues={selectedEmployee}
+                onSubmit={handleSave}
+                onCancel={resetDialogs}
+              />
+            </Stack>
+          </Paper>
+        </Box>
+      ) : null}
+
+      {deleteDialogOpen ? (
+        <Box
+          sx={{
+            position: 'fixed',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            p: 2,
+            zIndex: 1400,
+          }}
+        >
+          <Box
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              backgroundColor: 'rgba(15, 23, 42, 0.34)',
+            }}
+            onClick={resetDialogs}
+          />
+          <Paper
+            role="dialog"
+            aria-labelledby="delete-dialog-title"
+            sx={{
+              position: 'relative',
+              zIndex: 1,
+              width: '100%',
+              maxWidth: 420,
+              borderRadius: 4,
+              p: 3,
+            }}
+          >
+            <Stack spacing={2}>
+              <Typography id="delete-dialog-title" variant="h6">
+                Confirm delete
+              </Typography>
+              <Typography>
+                Remove {selectedEmployee?.fullName ?? 'this employee'} from the list?
+              </Typography>
+              <Stack direction="row" spacing={1.5} justifyContent="flex-end">
+                <Button variant="text" onClick={resetDialogs}>
+                  Cancel
+                </Button>
+                <Button variant="contained" color="error" onClick={handleConfirmDelete}>
+                  Confirm delete
+                </Button>
+              </Stack>
+            </Stack>
+          </Paper>
+        </Box>
+      ) : null}
+    </Box>
+  );
+}
