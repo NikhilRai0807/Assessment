@@ -31,6 +31,7 @@ type EmployeeTableProps = {
   onPageChange: (page: number) => void;
   onEdit: (employeeId: string) => void;
   onDelete: (employeeId: string) => void;
+  useGenericSortLabels?: boolean;
 };
 
 const columns = [
@@ -52,6 +53,7 @@ export function EmployeeTable({
   onPageChange,
   onEdit,
   onDelete,
+  useGenericSortLabels = false,
 }: EmployeeTableProps) {
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
 
@@ -61,13 +63,17 @@ export function EmployeeTable({
         <Table>
           <TableHead>
             <TableRow>
-              {columns.map((column) => (
+              {columns.map((column, index) => (
                 <TableCell key={column.key}>
                   <Stack direction="row" spacing={1} alignItems="center">
                     <Typography variant="subtitle2">{column.label}</Typography>
                     <IconButton
                       size="small"
-                      aria-label={`Sort by ${column.label.toLowerCase()}`}
+                      aria-label={
+                        useGenericSortLabels
+                          ? `Sort table column ${index + 1}`
+                          : `Sort by ${column.label.toLowerCase()}`
+                      }
                       onClick={() => onSortChange(column.key)}
                     >
                       <Typography

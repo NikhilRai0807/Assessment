@@ -63,13 +63,26 @@ export function SalaryInsightsDashboard({
             value: formatCurrency(salarySummary.medianSalary, salarySummary.country === 'India' ? 'INR' : 'USD'),
           },
         ].map((metric) => (
-          <Grid key={metric.label} size={{ xs: 12, sm: 6, lg: 3 }}>
-            <Card elevation={0} sx={{ borderRadius: 4 }}>
-              <CardContent>
-                <Typography variant="overline" color="text.secondary">
+          <Grid key={metric.label} size={{ xs: 6, md: 3 }}>
+            <Card elevation={0} sx={{ borderRadius: 4, height: '100%' }}>
+              <CardContent sx={{ p: { xs: 2, sm: 2.5 }, '&:last-child': { pb: { xs: 2, sm: 2.5 } } }}>
+                <Typography
+                  variant="overline"
+                  color="text.secondary"
+                  sx={{ display: 'block', fontSize: { xs: '0.62rem', sm: '0.72rem' } }}
+                >
                   {metric.label}
                 </Typography>
-                <Typography variant="h5" sx={{ mt: 1 }}>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    mt: 0.75,
+                    fontSize: { xs: '1.2rem', sm: '1.55rem', md: '1.9rem' },
+                    lineHeight: 1.15,
+                    overflowWrap: 'anywhere',
+                    wordBreak: 'break-word',
+                  }}
+                >
                   {metric.value}
                 </Typography>
               </CardContent>
@@ -79,12 +92,12 @@ export function SalaryInsightsDashboard({
       </Grid>
 
       <Grid container spacing={2}>
-        <Grid size={{ xs: 12, lg: 8 }}>
-          <Paper elevation={0} sx={{ borderRadius: 4, p: 3 }}>
+        <Grid size={{ xs: 12, xl: 8 }}>
+          <Paper elevation={0} sx={{ borderRadius: 4, p: { xs: 2, sm: 3 } }}>
             <Typography variant="h6" sx={{ mb: 2 }}>
               Salary distribution
             </Typography>
-            <ResponsiveContainer width="100%" height={260}>
+            <ResponsiveContainer width="100%" height={230}>
               <BarChart data={salaryDistribution}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="bucketStart" tickFormatter={(value) => formatCompactNumber(Number(value))} />
@@ -95,8 +108,8 @@ export function SalaryInsightsDashboard({
             </ResponsiveContainer>
           </Paper>
         </Grid>
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <Paper elevation={0} sx={{ borderRadius: 4, p: 3 }}>
+        <Grid size={{ xs: 12, xl: 4 }}>
+          <Paper elevation={0} sx={{ borderRadius: 4, p: { xs: 2, sm: 3 } }}>
             <Typography variant="h6" sx={{ mb: 2 }}>
               Top-paying job titles
             </Typography>

@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
-import { Alert, Box, Button, Stack, TextField } from '@mui/material';
+import { Alert, Box, Button, Grid, Stack, TextField } from '@mui/material';
 
 import type { EmployeeFormValues, EmployeeRecord } from '../../lib/types';
 
@@ -122,83 +122,109 @@ export function EmployeeForm({ initialValues, onSubmit, onCancel }: EmployeeForm
 
   return (
     <Box component="form" onSubmit={handleSubmit}>
-      <Stack spacing={2.5}>
+      <Stack spacing={2}>
         {Object.keys(errors).length > 0 ? (
           <Alert severity="error">Please fix the highlighted fields.</Alert>
         ) : null}
 
-        <TextField
-          label="Full name"
-          value={values.fullName}
-          onChange={handleChange('fullName')}
-          error={Boolean(errors.fullName)}
-          helperText={errors.fullName}
-          fullWidth
-        />
-        <TextField
-          label="Job title"
-          value={values.jobTitle}
-          onChange={handleChange('jobTitle')}
-          error={Boolean(errors.jobTitle)}
-          helperText={errors.jobTitle}
-          fullWidth
-        />
-        <TextField
-          label="Department"
-          value={values.department}
-          onChange={handleChange('department')}
-          error={Boolean(errors.department)}
-          helperText={errors.department}
-          fullWidth
-        />
-        <TextField
-          label="Country"
-          value={values.country}
-          onChange={handleChange('country')}
-          error={Boolean(errors.country)}
-          helperText={errors.country}
-          fullWidth
-        />
-        <TextField
-          label="Salary"
-          type="number"
-          value={values.salary === 0 ? '' : values.salary}
-          onChange={handleChange('salary')}
-          error={Boolean(errors.salary)}
-          helperText={errors.salary}
-          fullWidth
-        />
-        <TextField
-          label="Currency"
-          value={values.currency}
-          onChange={handleChange('currency')}
-          error={Boolean(errors.currency)}
-          helperText={errors.currency}
-          fullWidth
-        />
-        <TextField
-          label="Employment type"
-          select
-          SelectProps={{ native: true }}
-          value={values.employmentType}
-          onChange={handleChange('employmentType')}
-          fullWidth
-        >
-          <option value="FULL_TIME">FULL_TIME</option>
-          <option value="PART_TIME">PART_TIME</option>
-          <option value="CONTRACTOR">CONTRACTOR</option>
-          <option value="INTERN">INTERN</option>
-        </TextField>
-        <TextField
-          label="Hire date"
-          type="date"
-          value={values.hireDate}
-          onChange={handleChange('hireDate')}
-          error={Boolean(errors.hireDate)}
-          helperText={errors.hireDate}
-          InputLabelProps={{ shrink: true }}
-          fullWidth
-        />
+        <Grid container spacing={1.5}>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              label="Full name"
+              value={values.fullName}
+              onChange={handleChange('fullName')}
+              error={Boolean(errors.fullName)}
+              helperText={errors.fullName}
+              fullWidth
+              size="small"
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              label="Job title"
+              value={values.jobTitle}
+              onChange={handleChange('jobTitle')}
+              error={Boolean(errors.jobTitle)}
+              helperText={errors.jobTitle}
+              fullWidth
+              size="small"
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              label="Department"
+              value={values.department}
+              onChange={handleChange('department')}
+              error={Boolean(errors.department)}
+              helperText={errors.department}
+              fullWidth
+              size="small"
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              label="Country"
+              value={values.country}
+              onChange={handleChange('country')}
+              error={Boolean(errors.country)}
+              helperText={errors.country}
+              fullWidth
+              size="small"
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              label="Salary"
+              type="number"
+              value={values.salary === 0 ? '' : values.salary}
+              onChange={handleChange('salary')}
+              error={Boolean(errors.salary)}
+              helperText={errors.salary}
+              fullWidth
+              size="small"
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              label="Currency"
+              value={values.currency}
+              onChange={handleChange('currency')}
+              error={Boolean(errors.currency)}
+              helperText={errors.currency}
+              fullWidth
+              size="small"
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              label="Employment type"
+              select
+              SelectProps={{ native: true }}
+              value={values.employmentType}
+              onChange={handleChange('employmentType')}
+              fullWidth
+              size="small"
+            >
+              <option value="FULL_TIME">FULL_TIME</option>
+              <option value="PART_TIME">PART_TIME</option>
+              <option value="CONTRACTOR">CONTRACTOR</option>
+              <option value="INTERN">INTERN</option>
+            </TextField>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              label="Hire date"
+              type="date"
+              value={values.hireDate}
+              onChange={handleChange('hireDate')}
+              error={Boolean(errors.hireDate)}
+              helperText={errors.hireDate}
+              InputLabelProps={{ shrink: true }}
+              fullWidth
+              size="small"
+            />
+          </Grid>
+        </Grid>
 
         <Stack direction="row" spacing={1.5} justifyContent="flex-end">
           <Button variant="text" onClick={onCancel}>

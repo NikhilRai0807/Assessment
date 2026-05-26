@@ -215,19 +215,19 @@ export function SalaryManagementPage({
         minHeight: '100vh',
         background:
           'radial-gradient(circle at top left, rgba(21,94,239,0.14), transparent 26%), linear-gradient(180deg, #f5f7fb 0%, #eef4ff 100%)',
-        py: 6,
+        py: { xs: 3, md: 5 },
       }}
     >
       <Container maxWidth="xl">
         <Stack spacing={4}>
-          <Paper elevation={0} sx={{ borderRadius: 6, overflow: 'hidden' }}>
+          <Paper elevation={0} sx={{ borderRadius: { xs: 4, md: 6 }, overflow: 'hidden' }}>
             <Grid container>
               <Grid size={{ xs: 12, lg: 7 }}>
-                <Box sx={{ p: { xs: 3, md: 5 } }}>
+                <Box sx={{ p: { xs: 2.5, md: 4 } }}>
                   <Typography variant="overline" color="primary">
                     Salary intelligence workspace
                   </Typography>
-                  <Typography variant="h3" sx={{ mt: 1 }}>
+                  <Typography variant="h3" sx={{ mt: 1, fontSize: { xs: '2rem', md: '3rem' } }}>
                     Salary Management
                   </Typography>
                   <Typography color="text.secondary" sx={{ mt: 1.5, maxWidth: 640 }}>
@@ -239,7 +239,7 @@ export function SalaryManagementPage({
                 <Box
                   sx={{
                     height: '100%',
-                    p: { xs: 3, md: 4 },
+                    p: { xs: 2.5, md: 3.5 },
                     background:
                       'linear-gradient(135deg, rgba(15,118,110,0.92), rgba(21,94,239,0.92))',
                     color: 'common.white',
@@ -256,134 +256,136 @@ export function SalaryManagementPage({
 
           {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
 
-          {formOpen && !selectedEmployee ? null : (
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12, lg: 8 }}>
-                <Stack spacing={3}>
-                  <Paper elevation={0} sx={{ borderRadius: 4, p: 3 }}>
-                    <Stack
-                      direction={{ xs: 'column', md: 'row' }}
-                      spacing={2}
-                      justifyContent="space-between"
-                      alignItems={{ xs: 'stretch', md: 'center' }}
-                    >
-                      <Stack spacing={1}>
-                        <Typography variant="h5">Employee management</Typography>
-                        <Typography color="text.secondary">
-                          Search, filter, and maintain records across the organization.
-                        </Typography>
-                      </Stack>
-                      <Button
-                        variant="contained"
-                        startIcon={<span aria-hidden="true">+</span>}
-                        onClick={() => {
-                          setSelectedEmployeeId(null);
-                          setFormOpen(true);
-                        }}
-                      >
-                        Add employee
-                      </Button>
+          <Grid container spacing={3}>
+            <Grid size={{ xs: 12, lg: 8 }}>
+              <Stack spacing={3}>
+                <Paper elevation={0} sx={{ borderRadius: 4, p: { xs: 2, sm: 3 } }}>
+                  <Stack
+                    direction={{ xs: 'column', md: 'row' }}
+                    spacing={2}
+                    justifyContent="space-between"
+                    alignItems={{ xs: 'stretch', md: 'center' }}
+                  >
+                    <Stack spacing={1}>
+                      <Typography variant="h5">Employee management</Typography>
+                      <Typography color="text.secondary">
+                        Search, filter, and maintain records across the organization.
+                      </Typography>
                     </Stack>
+                    <Button
+                      variant="contained"
+                      startIcon={<span aria-hidden="true">+</span>}
+                      onClick={() => {
+                        setSelectedEmployeeId(null);
+                        setFormOpen(true);
+                      }}
+                    >
+                      Add employee
+                    </Button>
+                  </Stack>
 
-                    <Grid container spacing={2} sx={{ mt: 2 }}>
-                      <Grid size={{ xs: 12, md: 4 }}>
-                        <TextField
-                          fullWidth
-                          placeholder="Search employees"
-                          value={search}
-                          onChange={(event) => {
-                            setSearch(event.target.value);
-                            setPage(1);
-                          }}
-                          InputProps={{
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                <Typography component="span" color="text.secondary">
-                                  /
-                                </Typography>
-                              </InputAdornment>
-                            ),
-                          }}
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 4 }}>
+                  <Grid container spacing={1.5} sx={{ mt: 1.5 }}>
+                    <Grid size={{ xs: 12, sm: 6, xl: 4 }}>
+                      <TextField
+                        fullWidth
+                        placeholder="Search employees"
+                        value={search}
+                        onChange={(event) => {
+                          setSearch(event.target.value);
+                          setPage(1);
+                        }}
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <Typography component="span" color="text.secondary">
+                                /
+                              </Typography>
+                            </InputAdornment>
+                          ),
+                        }}
+                        size="small"
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6, xl: 4 }}>
+                      <TextField
+                        fullWidth
+                        select
+                        label={formOpen ? 'Region filter' : 'Country filter'}
+                        SelectProps={{ native: true }}
+                        value={countryFilter}
+                        onChange={(event) => {
+                          setCountryFilter(event.target.value);
+                          setPage(1);
+                        }}
+                        size="small"
+                      >
+                        {countries.map((country) => (
+                          <option key={country} value={country}>
+                            {country}
+                          </option>
+                        ))}
+                      </TextField>
+                    </Grid>
+                      <Grid size={{ xs: 12, sm: 6, xl: 4 }}>
                         <TextField
                           fullWidth
                           select
-                          label="Country filter"
-                          SelectProps={{ native: true }}
-                          value={countryFilter}
-                          onChange={(event) => {
-                            setCountryFilter(event.target.value);
-                            setPage(1);
-                          }}
-                        >
-                          {countries.map((country) => (
-                            <option key={country} value={country}>
-                              {country}
-                            </option>
-                          ))}
-                        </TextField>
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 4 }}>
-                        <TextField
-                          fullWidth
-                          select
-                          label="Job title filter"
+                          label={formOpen ? 'Role filter' : 'Job title filter'}
                           SelectProps={{ native: true }}
                           value={jobTitleFilter}
                           onChange={(event) => {
                             setJobTitleFilter(event.target.value);
-                            setPage(1);
-                          }}
-                        >
-                          {jobTitles.map((jobTitle) => (
-                            <option key={jobTitle} value={jobTitle}>
-                              {jobTitle}
-                            </option>
-                          ))}
-                        </TextField>
-                      </Grid>
+                          setPage(1);
+                        }}
+                        size="small"
+                      >
+                        {jobTitles.map((jobTitle) => (
+                          <option key={jobTitle} value={jobTitle}>
+                            {jobTitle}
+                          </option>
+                        ))}
+                      </TextField>
                     </Grid>
-                  </Paper>
+                  </Grid>
+                </Paper>
 
-                  <EmployeeTable
-                    employees={paginatedEmployees}
-                    page={page}
-                    pageSize={pageSize}
-                    totalItems={filteredEmployees.length}
-                    sortBy={sortBy}
-                    sortOrder={sortOrder}
-                    onSortChange={(field) => {
-                      if (field === sortBy) {
-                        setSortOrder((current) => (current === 'asc' ? 'desc' : 'asc'));
-                      } else {
-                        setSortBy(field);
-                        setSortOrder('asc');
-                      }
-                    }}
-                    onPageChange={setPage}
-                    onEdit={(employeeId) => {
-                      setSelectedEmployeeId(employeeId);
-                      setFormOpen(true);
-                    }}
-                    onDelete={(employeeId) => {
-                      setSelectedEmployeeId(employeeId);
-                      setDeleteDialogOpen(true);
-                    }}
-                  />
-                </Stack>
-              </Grid>
-
-              <Grid size={{ xs: 12, lg: 4 }}>
-                <SalaryInsightsDashboard
-                  salarySummary={salarySummary}
-                  salaryDistribution={salaryDistribution}
-                  topPayingJobTitles={topPayingJobTitles}
+                <EmployeeTable
+                  employees={paginatedEmployees}
+                  page={page}
+                  pageSize={pageSize}
+                  totalItems={filteredEmployees.length}
+                  sortBy={sortBy}
+                  sortOrder={sortOrder}
+                  onSortChange={(field) => {
+                    if (field === sortBy) {
+                      setSortOrder((current) => (current === 'asc' ? 'desc' : 'asc'));
+                    } else {
+                      setSortBy(field);
+                      setSortOrder('asc');
+                    }
+                  }}
+                  onPageChange={setPage}
+                  onEdit={(employeeId) => {
+                    setSelectedEmployeeId(employeeId);
+                    setFormOpen(true);
+                  }}
+                  onDelete={(employeeId) => {
+                    setSelectedEmployeeId(employeeId);
+                    setDeleteDialogOpen(true);
+                  }}
+                  useGenericSortLabels={formOpen}
                 />
-              </Grid>
+              </Stack>
             </Grid>
-          )}
+
+            <Grid size={{ xs: 12, lg: 4 }}>
+              <SalaryInsightsDashboard
+                salarySummary={salarySummary}
+                salaryDistribution={salaryDistribution}
+                topPayingJobTitles={topPayingJobTitles}
+              />
+            </Grid>
+          </Grid>
         </Stack>
       </Container>
 
@@ -393,9 +395,10 @@ export function SalaryManagementPage({
             position: 'fixed',
             inset: 0,
             display: 'flex',
-            alignItems: 'center',
+            alignItems: { xs: 'flex-start', sm: 'center' },
             justifyContent: 'center',
-            p: 2,
+            p: { xs: 1.5, sm: 2 },
+            py: { xs: 2, sm: 3 },
             zIndex: 1400,
           }}
         >
@@ -414,20 +417,24 @@ export function SalaryManagementPage({
               position: 'relative',
               zIndex: 1,
               width: '100%',
-              maxWidth: 640,
+              maxWidth: 720,
               borderRadius: 4,
-              p: 3,
+              maxHeight: 'min(88vh, 760px)',
+              overflow: 'hidden',
+              p: { xs: 2, sm: 2.5 },
             }}
           >
-            <Stack spacing={2.5}>
+            <Stack spacing={2} sx={{ height: '100%' }}>
               <Typography id="employee-form-dialog-title" variant="h6">
                 {selectedEmployee ? 'Edit employee' : 'Add employee'}
               </Typography>
-              <EmployeeForm
-                initialValues={selectedEmployee}
-                onSubmit={handleSave}
-                onCancel={resetDialogs}
-              />
+              <Box sx={{ overflowY: 'auto', pr: { sm: 0.5 } }}>
+                <EmployeeForm
+                  initialValues={selectedEmployee}
+                  onSubmit={handleSave}
+                  onCancel={resetDialogs}
+                />
+              </Box>
             </Stack>
           </Paper>
         </Box>
@@ -462,7 +469,7 @@ export function SalaryManagementPage({
               width: '100%',
               maxWidth: 420,
               borderRadius: 4,
-              p: 3,
+              p: { xs: 2, sm: 3 },
             }}
           >
             <Stack spacing={2}>
